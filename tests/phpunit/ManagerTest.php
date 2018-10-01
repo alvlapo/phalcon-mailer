@@ -130,4 +130,24 @@ class ManagerTest extends TestCase
     self::assertRegExp('/<img src="cid:/', $manager->getLastMessage()->getBody());
     self::assertNotRegExp('/<img src="img\/logo.png">/i', $manager->getLastMessage()->getBody());
   }
+
+  public function testCallMagicMethod()
+  {
+    $manager = new Manager($this->mailer);
+
+    $manager->sendEmailConfirmation(
+      [
+        'to' => ['test@example.com' => 'Alex'],
+        'subject' => 'Example subject'
+      ],
+      [
+        'username' => 'Alex',
+        'token' => 'qwerty'
+      ]
+    );
+
+    $this->assertRegExp('/Welcome Alex!/', $manager->getLastMessage()->getBody());
+    $this->assertSame(['test@example.com' => 'Alex'], $manager->getLastMessage()->getTo());
+    $this->assertSame('Example subject', $manager->getLastMessage()->getSubject());
+  }
 }

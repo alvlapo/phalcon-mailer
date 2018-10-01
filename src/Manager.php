@@ -60,6 +60,17 @@ class Manager extends Plugin
     $this->view = $view;
   }
 
+  public function __call($name, $arguments)
+  {
+    if (substr($name, 0, 4) == 'send')
+    {
+      $pieces = preg_split('/(?<=[a-z])(?=[A-Z])/', substr($name, 4));
+      $path = strtolower(implode("_", $pieces));
+
+      $this->send($path, $arguments[0], $arguments[1]);
+    }
+  }
+
   /**
    * @param $path
    * @param $messageParams
