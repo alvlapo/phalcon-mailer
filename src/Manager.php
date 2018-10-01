@@ -38,12 +38,12 @@ class Manager extends Plugin
   {
     if (is_string($mail))
     {
-      $mail = $this->getMailFromContainer($mail);
+      $mail = $this->getDI()->getShared($mail);
     }
 
     if (is_string($view))
     {
-      $view = $this->getViewFromContainer($view);
+      $view = $this->getDI()->getShared($view);
     }
 
     if ( !($mail instanceof \Swift_Mailer) ) {
@@ -54,6 +54,13 @@ class Manager extends Plugin
     if ( !($view instanceof View\Simple) ) {
 
       throw new \Exception('Render service must be instance of \Phalcon\Mvc\View\Simple');
+    }
+
+    if (empty($view->getViewsDir()))
+    {
+      throw new \Exception(
+        'You must configure ViewsDir in rendering service (Phalcon\Mvc\View\Simple)'
+      );
     }
 
     $this->mailer = $mail;
@@ -110,31 +117,6 @@ class Manager extends Plugin
   public function getLastMessage()
   {
     return $this->lastMessage;
-  }
-
-  protected function getMailFromContainer($serviceName)
-  {
-    return $this->getDI()->getShared($serviceName);
-  }
-
-  /**
-   * @param $serviceName
-   * @return View
-   * @throws \Exception
-   */
-  protected function getViewFromContainer($serviceName)
-  {
-    /** @var View $view */
-    $view = $this->getDI()->getShared($serviceName);
-
-    if (empty($view->getViewsDir()))
-    {
-      throw new \Exception(
-        'You must configure ViewsDir in rendering service (Phalcon\Mvc\View\Simple)'
-      );
-    }
-
-    return $view;
   }
 
   public function getDI()
