@@ -40,3 +40,20 @@ $mailer->sendEmailConfirmation(
   ]
 );
 ```
+
+## Sending with a Mailable
+
+Using mailable classes are a lot more elegant than the basic usage example above.
+Building up the mail in a mailable class cleans up controllers and routes, making things look a more 
+tidy and less cluttered as well as making things so much more manageable.
+
+All of a mailable class' configuration is done in the **compose** method. Within this method, 
+you may call various methods such as **from**, **subject**, **view**, and **attach** to configure the email's 
+presentation and delivery.
+
+Mailable classes are required to extend the base Rotoscoping\Phalcon\Mailer\Mailable class;
+
+## Inspired by
+* [mailer-library](https://github.com/2amigos/mailer-library)
+* [slim3-mailer](https://github.com/andrewdyer/slim3-mailer)
+* [mailer-library](https://github.com/2amigos/mailer-library)
