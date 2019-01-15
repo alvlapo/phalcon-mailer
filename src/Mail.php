@@ -5,6 +5,33 @@ namespace Rotoscoping\Phalcon\Mailer;
 
 class Mail
 {
+    const
+        FIELD_TO             = 'to',
+        FIELD_FROM           = 'from',
+        FIELD_CC             = 'cc',
+        FIELD_BCC            = 'bcc',
+        FIELD_SUBJECT        = 'subject',
+        FIELD_TEXT           = 'text',
+        FIELD_HTML           = 'html',
+        FIELD_PRIORITY       = 'priority',
+        FIELD_VIEW           = 'view',
+        FIELD_VIEW_DATA      = 'viewData',
+        FIELD_ATTACHMENTS    = 'attachments';
+
+    const MAIL_FIELDS = [
+        self::FIELD_TO,
+        self::FIELD_FROM,
+        self::FIELD_CC,
+        self::FIELD_BCC,
+        self::FIELD_SUBJECT,
+        self::FIELD_TEXT,
+        self::FIELD_HTML,
+        self::FIELD_PRIORITY,
+        self::FIELD_VIEW,
+        self::FIELD_VIEW_DATA,
+        self::FIELD_ATTACHMENTS
+    ];
+
     /**
      * The "to" recipients of the message.
      *
@@ -69,11 +96,22 @@ class Mail
      *
      * @param string $address
      * @param string $name
+     * @param bool $override
      * @return Mail
      */
-    public function to($address, $name = null)
+    public function to($address, $name = null, $override = false)
     {
-        return $this->setRecipient($address, $name, 'to');
+        if (!is_array($address) && isset($name)) {
+
+            $address = [$address => $name];
+        }
+
+        if ($override)
+        {
+            return $this->setRecipient((array)$address, self::FIELD_TO);
+        }
+
+        return $this->addRecipient((array)$address, self::FIELD_TO);
     }
 
     /**
@@ -81,11 +119,22 @@ class Mail
      *
      * @param string $address
      * @param string $name
+     * @param bool $override
      * @return Mail
      */
-    public function cc($address, $name = null)
+    public function cc($address, $name = null, $override = false)
     {
-        return $this->setRecipient($address, $name, 'cc');
+        if (!is_array($address) && isset($name)) {
+
+            $address = [$address => $name];
+        }
+
+        if ($override) {
+
+            return $this->setRecipient((array)$address,self::FIELD_CC);
+        }
+
+        return $this->addRecipient((array)$address, self::FIELD_CC);
     }
 
     /**
@@ -93,11 +142,22 @@ class Mail
      *
      * @param string $address
      * @param string $name
+     * @param bool $override
      * @return Mail
      */
-    public function bcc($address, $name = null)
+    public function bcc($address, $name = null, $override = false)
     {
-        return $this->setRecipient($address, $name, 'bcc');
+        if (!is_array($address) && isset($name)) {
+
+            $address = [$address => $name];
+        }
+
+        if ($override) {
+
+            return $this->setRecipient((array)$address, self::FIELD_BCC);
+        }
+
+        return $this->addRecipient((array)$address, self::FIELD_BCC);
     }
 
     /**
@@ -105,11 +165,22 @@ class Mail
      *
      * @param string $address
      * @param string $name
+     * @param bool $override
      * @return Mail
      */
-    public function from($address, $name = null)
+    public function from($address, $name = null, $override = false)
     {
-        return $this->setRecipient($address, $name, 'from');
+        if (!is_array($address) && isset($name)) {
+
+            $address = [$address => $name];
+        }
+
+        if ($override) {
+
+            return $this->setRecipient((array)$address, self::FIELD_FROM);
+        }
+
+        return $this->addRecipient((array)$address, self::FIELD_FROM);
     }
 
     /**
@@ -290,6 +361,109 @@ class Mail
         return $this->text;
     }
 
+    public function hasTo(): bool
+    {
+        return !empty($this->to);
+    }
+
+    public function hasCc(): bool
+    {
+        return !empty($this->cc);
+    }
+
+    public function hasBcc(): bool
+    {
+        return !empty($this->bcc);
+    }
+
+    public function hasFrom(): bool
+    {
+        return !empty($this->from);
+    }
+
+    public function hasPriority(): bool
+    {
+        return !empty($this->priority);
+    }
+
+    public function hasSubject(): bool
+    {
+        return !empty($this->subject);
+    }
+
+    public function hasText(): bool
+    {
+        return !empty($this->text);
+    }
+
+    public function hasHtml(): bool
+    {
+        return !empty($this->html);
+    }
+
+    public function hasView(): bool
+    {
+        return !empty($this->view);
+    }
+
+    public function hasViewData(): bool
+    {
+        return !empty($this->viewData);
+    }
+
+    public function hasAttachments(): bool
+    {
+        return !empty($this->attachments);
+    }
+
+    /**
+     * Merges two mails together
+     *
+     * @param Mail $mail
+     * @param bool $overrideRecipients
+     * @return Mail
+     */
+    public function merge(Mail $mail, $overrideRecipients = true)
+    {
+        foreach (self::MAIL_FIELDS as $property) {
+
+            $hasMethod = 'has' . ucfirst($property);
+            $getMethod = 'get' . ucfirst($property);
+            $setMethod = $property;
+
+            if ($mail->$hasMethod()) {
+
+                $recipientsField = in_array($property, [self::FIELD_TO, self::FIELD_CC, self::FIELD_BCC, self::FIELD_FROM]);
+
+                if (!$this->$hasMethod()) {
+
+                    if ($recipientsField) {
+
+                        $this->setRecipient($mail->$getMethod(), $property);
+
+                    } else {
+
+                        $this->$setMethod($mail->$getMethod());
+
+                    }
+
+                } else {
+
+                    if ($recipientsField && !$overrideRecipients) {
+
+                        $this->addRecipient($mail->$getMethod(), $property);
+
+                    }
+
+                }
+
+            }
+
+        }
+
+        return $this;
+    }
+
     /**
      * Set the recipients of the message
      *
@@ -300,22 +474,77 @@ class Mail
      * @param string $property
      * @return Mail
      */
-    public function setRecipient($address, $name = null, $property = 'to')
+    protected function setRecipient(array $address, $property = self::FIELD_TO): Mail
     {
-        if (!in_array($property, ['to', 'cc', 'bcc', 'from'])) {
-           return $this;
-        }
+        // Erase previous recipients
+        $this->{$property} = [];
 
-        if(!empty($name))
-        {
-            $this->{$property}[$address] = $name;
-        }
-        else
-        {
-            $this->{$property}[] = $address;
-        }
+        $this->setAddress($address, $property);
 
         return $this;
+    }
+
+    /**
+     * @param $address
+     * @param null $name
+     * @param string $property
+     * @return Mail
+     */
+    protected function addRecipient(array $address, $property = 'to'): Mail
+    {
+        if ($this->hasRecipient($address, $property)) {
+
+            return $this;
+        }
+
+        $this->setAddress($address, $property);
+
+        return $this;
+    }
+
+    /**
+     * @param $address
+     * @param null $name
+     * @param string $property
+     * @return bool
+     */
+    protected function hasRecipient($address, $property = self::FIELD_TO): bool
+    {
+        $key = array_keys($address)[0];
+
+        $keys = array_keys($this->{$property});
+        $values = array_values($this->{$property});
+
+        if (is_string($key)) {
+
+            $address = $key;
+
+        } else {
+
+            $address = $address[0];
+        }
+
+        return (in_array($address, $keys) || in_array($address, $values));
+    }
+
+    /**
+     * @param array $addresses
+     * @param string $property
+     */
+    protected function setAddress(array $addresses, $property = 'to')
+    {
+        foreach ($addresses as $key => $value) {
+
+            if (is_string($key)) {
+
+                $this->{$property}[$key] = $value;
+
+            } else {
+
+                $this->{$property}[] = $value;
+
+            }
+        }
     }
 
     /**
