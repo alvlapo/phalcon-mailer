@@ -150,4 +150,32 @@ class ManagerTest extends TestCase
     $this->assertSame(['test@example.com' => 'Alex'], $manager->getLastMessage()->getTo());
     $this->assertSame('Example subject', $manager->getLastMessage()->getSubject());
   }
+
+    /**
+     * @throws \Exception
+     */
+    public function testCreateMailFromMailer()
+    {
+        $manager = new Manager($this->mailer);
+
+        $message1 = $manager
+          ->to('test1@test.com')
+          ->subject('Test message 1')
+          ->text('This is text message 1');
+
+        $message2 = $manager
+            ->subject('Test message 2')
+            ->to('test2@test.com', 'Test user')
+            ->text('This is text message 2');
+
+        // Message 1
+        $this->assertSame(['test1@test.com'], $message1->getTo());
+        $this->assertSame('Test message 1', $message1->getSubject());
+        $this->assertSame('This is text message 1', $message1->getText());
+
+        // Message 2
+        $this->assertSame(['test2@test.com' => 'Test user'], $message2->getTo());
+        $this->assertSame('Test message 2', $message2->getSubject());
+        $this->assertSame('This is text message 2', $message2->getText());
+    }
 }

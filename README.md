@@ -1,5 +1,23 @@
 # phalcon-mailer
-Mailer wrapper over SwiftMailer and View component for Phalcon.
+Mailer wrapper over SwiftMailer and View component for [Phalcon framework](https://phalconphp.com/).
+
+## Usage
+
+### Sending the Email
+
+```php
+// Initialize manager with mail and view services from DI
+$mailer = new \Rotoscoping\Phalcon\Manager('mail', 'view');
+
+// Compose mail
+$mailer
+  ->to('test@test.com')
+  ->subject('Simple subject')
+  ->text('Simple text part message')
+  ->send();
+  
+// Fin
+```
 
 ## Example
 

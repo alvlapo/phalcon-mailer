@@ -6,6 +6,21 @@ use Phalcon\Mvc\User\Plugin;
 use Phalcon\Mvc\View;
 use Swift_Image;
 
+/**
+ * Class Manager
+ * @package Rotoscoping\Phalcon\Mailer
+ *
+ * @method Mail to($address, $name = null)
+ * @method Mail cc($address, $name = null)
+ * @method Mail bcc($address, $name = null)
+ * @method Mail from($address, $name = null)
+ * @method Mail subject($subject)
+ * @method Mail priority($level = 3)
+ * @method Mail text(string $text)
+ * @method Mail html(string $html)
+ * @method Mail view(string $view)
+ * @method Mail with($key, $value)
+ */
 class Manager extends Plugin
 {
   /**
@@ -60,16 +75,28 @@ class Manager extends Plugin
     $this->view = $view;
   }
 
-  public function __call($name, $arguments)
-  {
-    if (substr($name, 0, 4) == 'send')
+    /**
+     * @param $name
+     * @param $arguments
+     * @return mixed
+     */
+    public function __call($name, $arguments)
     {
-      $pieces = preg_split('/(?<=[a-z])(?=[A-Z])/', substr($name, 4));
-      $path = strtolower(implode("_", $pieces));
+        if (substr($name, 0, 4) == 'send')
+        {
+            $pieces = preg_split('/(?<=[a-z])(?=[A-Z])/', substr($name, 4));
+            $path = strtolower(implode("_", $pieces));
 
-      $this->send($path, $arguments[0], $arguments[1]);
+            $this->send($path, $arguments[0], $arguments[1]);
+        }
+
+        $message = new Mail();
+
+        if (method_exists($message, $name))
+        {
+            return call_user_func_array([$message, $name], $arguments);
+        }
     }
-  }
 
   /**
    * @param $path
