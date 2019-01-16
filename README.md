@@ -18,6 +18,42 @@ $mailer
   
 // Fin
 ```
+### Configuring The Sender
+
+There are two ways to configure the sender. 
+
+First, you may use the **from** method within your Mail class' build method:
+
+```php
+$mail = new Mail();
+$mail
+  ->from('support@example.com', 'Support team')
+  ->to('test@test.com')
+  ->subject('Simple subject')
+  ->text('Simple text part message');
+  
+$mail->send();
+```
+
+Instead, you may specify a global "from" address throw draft mail in your Manager instance. 
+This address will be used by default for all you mails:
+
+```php
+$defaultMail = new Mail();
+$defaultMail
+  ->from('support@example.com', 'Support team');
+  
+$mailer->setDraftMail($defaultMail);
+
+$mail = new Mail();
+$mail
+  ->to('test@test.com')
+  ->subject('Simple subject')
+  ->text('Simple text part message');
+  
+$mail->send();
+```
+
 
 ## Example
 

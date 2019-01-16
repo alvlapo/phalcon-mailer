@@ -33,6 +33,11 @@ class Manager extends Plugin
    */
   private $view = null;
 
+    /**
+     * @var null|Mail
+     */
+  private $draftMail = null;
+
   /**
    * @var array
    */
@@ -90,11 +95,11 @@ class Manager extends Plugin
             $this->send($path, $arguments[0], $arguments[1]);
         }
 
-        $message = new Mail();
-
-        if (method_exists($message, $name))
+        if (method_exists($this->getDraftMail(), $name))
         {
-            return call_user_func_array([$message, $name], $arguments);
+            $newMail = clone $this->getDraftMail();
+
+            return call_user_func_array([$newMail, $name], $arguments);
         }
     }
 
@@ -142,6 +147,28 @@ class Manager extends Plugin
     return $this->mailer->send($message);
   }
 
+    /**
+     * @return Mail|null
+     */
+    public function getDraftMail(): Mail
+    {
+        if (!$this->draftMail) {
+
+            $mailClass = $this->getMailClass();
+            $this->draftMail = new $mailClass();
+        }
+
+        return $this->draftMail;
+    }
+
+    /**
+     * @param Mail|null $draftMail
+     */
+    public function setDraftMail(Mail $draftMail)
+    {
+        $this->draftMail = $draftMail;
+    }
+
   /**
    * @return mixed
    */
@@ -149,6 +176,17 @@ class Manager extends Plugin
   {
     return $this->lastMessage;
   }
+
+    /**
+     * Get class for default mail
+     * Override this method if you extend standard Mail class
+     *
+     * @return string
+     */
+    protected function getMailClass(): string
+    {
+        return Mail::class;
+    }
 
   protected function getMailFromContainer($serviceName)
   {
