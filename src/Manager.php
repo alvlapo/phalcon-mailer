@@ -3,7 +3,7 @@
 namespace Rotoscoping\Phalcon\Mailer;
 
 use Phalcon\Mvc\User\Plugin;
-use Phalcon\Mvc\View;
+use Phalcon\Mvc\ViewBaseInterface;
 use Swift_Image;
 
 /**
@@ -23,20 +23,25 @@ use Swift_Image;
  */
 class Manager extends Plugin
 {
-  /**
-   * @var \Swift_Mailer
-   */
-  private $mailer = null;
+    /**
+    * @var \Swift_Mailer
+    */
+    private $mailer = null;
 
-  /**
-   * @var null|View\Simple
-   */
-  private $view = null;
+    /**
+     * @var null
+     */
+    private $transport = null;
+
+    /**
+    * @var null|ViewBaseInterface
+    */
+    private $view = null;
 
     /**
      * @var null|Mail
      */
-  private $draftMail = null;
+    private $draftMail = null;
 
   /**
    * @var array
@@ -48,37 +53,17 @@ class Manager extends Plugin
    */
   private $lastMessage;
 
-  /**
-   * Manager constructor.
-   * @param $mail
-   * @param $view
-   * @throws \Exception
-   */
-  public function __construct($mail = 'mail', $view = 'view')
-  {
-    if (is_string($mail))
+    /**
+     * Manager constructor.
+     *
+     * @param \Swift_Transport $transport
+     * @param ViewBaseInterface $view
+     */
+    public function __construct(\Swift_Transport $transport, ViewBaseInterface $view)
     {
-      $mail = $this->getMailFromContainer($mail);
+        $this->transport = $transport;
+        $this->view = $view;
     }
-
-    if (is_string($view))
-    {
-      $view = $this->getViewFromContainer($view);
-    }
-
-    if ( !($mail instanceof \Swift_Mailer) ) {
-
-      throw new \Exception('Mail service must be instance of \Swift_Mailer');
-    }
-
-    if ( !($view instanceof View\Simple) ) {
-
-      throw new \Exception('Render service must be instance of \Phalcon\Mvc\View\Simple');
-    }
-
-    $this->mailer = $mail;
-    $this->view = $view;
-  }
 
     /**
      * @param $name
@@ -144,7 +129,7 @@ class Manager extends Plugin
     // ToDo:
     // Add list of addresses that were rejected by the Transport
     // by using a by-reference parameter to send()
-    return $this->mailer->send($message);
+    return $this->getSwiftMailer()->send($message);
   }
 
     /**
@@ -169,6 +154,21 @@ class Manager extends Plugin
         $this->draftMail = $draftMail;
     }
 
+    /**
+     * Get Swift mailer instance
+     *
+     * @return \Swift_Mailer
+     */
+    public function getSwiftMailer()
+    {
+        if (!$this->mailer) {
+
+            $this->mailer = new \Swift_Mailer($this->transport);
+        }
+
+        return $this->mailer;
+    }
+
   /**
    * @return mixed
    */
@@ -187,39 +187,4 @@ class Manager extends Plugin
     {
         return Mail::class;
     }
-
-  protected function getMailFromContainer($serviceName)
-  {
-    return $this->getDI()->getShared($serviceName);
-  }
-
-  /**
-   * @param $serviceName
-   * @return View
-   * @throws \Exception
-   */
-  protected function getViewFromContainer($serviceName)
-  {
-    /** @var View $view */
-    $view = $this->getDI()->getShared($serviceName);
-
-    if (empty($view->getViewsDir()))
-    {
-      throw new \Exception(
-        'You must configure ViewsDir in rendering service (Phalcon\Mvc\View\Simple)'
-      );
-    }
-
-    return $view;
-  }
-
-  public function getDI()
-  {
-    if ($this->_dependencyInjector == null)
-    {
-      $this->_dependencyInjector = \Phalcon\Di::getDefault();
-    }
-
-    return $this->_dependencyInjector;
-  }
 }

@@ -2,29 +2,17 @@
 
 namespace Rotoscoping\Phalcon\Mailer;
 
-use Phalcon\Di;
-use Phalcon\Mvc\View;
 use PHPUnit\Framework\TestCase;
 
 class ManagerTest extends TestCase
 {
-  protected $mailer;
+  protected $transport;
+  protected $view;
 
   public function setUp()
   {
-    $stub = $this->getMockBuilder(\Swift_Mailer::class)
-      ->setConstructorArgs([new \Swift_SendmailTransport()])
-      ->setMethods(['send'])
-      ->getMock();
-
-    $stub->method('send')->willReturn(1);
-
-    $this->mailer = $stub;
-
-    if (Di::getDefault()->has('view'))
-    {
-      Di::getDefault()->get('view')->setViewsDir(ROOT_PATH . '/_data/templates/');
-    }
+    $this->transport = new \Swift_NullTransport();
+    $this->view = \Phalcon\Di::getDefault()->get('view');
   }
 
   protected function tearDown()
@@ -37,7 +25,7 @@ class ManagerTest extends TestCase
    */
   public function testMessageParams()
   {
-    $manager = new Manager($this->mailer);
+    $manager = new Manager($this->transport, $this->view);
 
     $this->assertNull($manager->getLastMessage());
 
@@ -60,41 +48,9 @@ class ManagerTest extends TestCase
   /**
    * @throws \Exception
    */
-  public function testExceptionOnMissServiceInContainer()
-  {
-    $this->markTestSkipped('must be revisited.');
-    $di = Di::getDefault();
-    $di->remove('view');
-
-    $this->expectException(\Exception::class);
-
-    $manager = new Manager($this->mailer);
-    $manager->send('notification', ['alex@example.com'], ['username' => 'Alex', 'password' => 'qwerty']);
-  }
-
-  /**
-   * @throws \Exception
-   */
-  public function testExceptionOnEmptyViewsDirInService()
-  {
-    $this->markTestSkipped('must be revisited.');
-    $di = Di::getDefault();
-    /** @var View $view */
-    $view = $di->get('view');
-    $view->setViewsDir('');
-
-    $this->expectException(\Exception::class);
-
-    $manager = new Manager($this->mailer);
-    $manager->send('notification', ['alex@example.com']);
-  }
-
-  /**
-   * @throws \Exception
-   */
   public function testTemplateVariablesMessage()
   {
-    $manager = new Manager($this->mailer);
+    $manager = new Manager($this->transport, $this->view);
 
     $manager->send(
       'notification',
@@ -113,7 +69,7 @@ class ManagerTest extends TestCase
   }
   public function testEmbedImageToMessage()
   {
-    $manager = new Manager($this->mailer);
+    $manager = new Manager($this->transport, $this->view);
 
     $manager->send(
       'notification',
@@ -133,7 +89,7 @@ class ManagerTest extends TestCase
 
   public function testCallMagicMethod()
   {
-    $manager = new Manager($this->mailer);
+    $manager = new Manager($this->transport, $this->view);
 
     $manager->sendEmailConfirmation(
       [
@@ -156,7 +112,7 @@ class ManagerTest extends TestCase
      */
     public function testCreateMailFromMailer()
     {
-        $manager = new Manager($this->mailer);
+        $manager = new Manager($this->transport, $this->view);
 
         $message1 = $manager
           ->to('test1@test.com')
@@ -184,7 +140,7 @@ class ManagerTest extends TestCase
      */
     function testDefaultMail()
     {
-        $manager = new Manager($this->mailer);
+        $manager = new Manager($this->transport, $this->view);
 
         $defaultMail = new Mail();
         $defaultMail

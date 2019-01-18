@@ -1,13 +1,28 @@
 # phalcon-mailer
-Mailer wrapper over SwiftMailer and View component for [Phalcon framework](https://phalconphp.com/).
+Mailer wrapper over [SwiftMailer](https://swiftmailer.symfony.com/) for [Phalcon framework](https://phalconphp.com/).
 
 ## Usage
+
+### Configuration
+
+There are [several types of Transport](https://swiftmailer.symfony.com/docs/sending.html#transport-types) in Swift Mailer,
+you create a Transport, use it to create the Manager, then you use the Manager to send the mail.
+
+```php
+$transport = new \Swift_SendmailTransport();
+$view = \Phalcon\Di::getDefault()->getShared('view');
+
+$mailer = new \Rotoscoping\Phalcon\Manager($transport, $view);
+
+// Add mailer to container (optional)
+\Phalcon\Di::getDefault()->setShared('mailer', $mailer);
+```
 
 ### Sending the Email
 
 ```php
-// Initialize manager with mail and view services from DI
-$mailer = new \Rotoscoping\Phalcon\Manager('mail', 'view');
+// Get mailer from DI
+$mailer = \Phalcon\Di::getDefault()->get('mailer');
 
 // Compose mail
 $mailer
@@ -25,6 +40,9 @@ There are two ways to configure the sender.
 First, you may use the **from** method within your Mail class' build method:
 
 ```php
+// You must initialize and add Manager instance to DI as 'mailer' service (see above)
+// or extend Mail class and owerride method getMailerInstance()
+
 $mail = new Mail();
 $mail
   ->from('support@example.com', 'Support team')
@@ -42,7 +60,10 @@ This address will be used by default for all you mails:
 $defaultMail = new Mail();
 $defaultMail
   ->from('support@example.com', 'Support team');
-  
+
+// Get mailer from DI (see initializatio section)
+$mailer = \Phalcon\Di::getDefault()->get('mailer');
+
 $mailer->setDraftMail($defaultMail);
 
 $mail = new Mail();
@@ -53,7 +74,6 @@ $mail
   
 $mail->send();
 ```
-
 
 ## Example
 
